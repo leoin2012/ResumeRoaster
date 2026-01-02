@@ -1,0 +1,22 @@
+[DEFAULT]
+# API 提供商选择: deepseek 或 google
+provider = deepseek
+
+[embedding]
+# Embedding 类型: local (本地免费) 或 deepseek (需API，DeepSeek暂不支持，会报错)
+# 推荐使用 local，首次运行会下载约400MB模型
+type = local
+model = sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+
+[deepseek]
+# DeepSeek API 配置
+# 申请地址: https://platform.deepseek.com/api_keys
+api_key = your-deepseek-api-key
+base_url = https://api.deepseek.com/v1
+model = deepseek-chat
+
+[google]
+# Google Gemini API 配置
+# 申请地址: https://aistudio.google.com/apikey
+api_key = your-google-api-key
+model = gemini-2.0-flash
