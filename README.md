@@ -7,15 +7,23 @@
 - 🎯 **精准提问**：基于简历内容的针对性技术问题，不是泛泛而谈
 - 🧠 **智能检索**：使用 RAG 技术，AI 能准确引用简历中的具体项目和技术栈
 - 💬 **连续对话**：支持多轮对话，面试官会根据你的回答继续追问
+- 🎭 **多种风格**：支持刁钻型、伙伴型、引导型三种面试官风格，可配置或随机选择
+- 🌐 **API 服务**：提供 RESTful API，支持 Web/移动端前端接入
 - 🔧 **多模型支持**：支持 DeepSeek 和 Google Gemini API
 - 🆓 **本地 Embedding**：可使用免费的本地 Embedding 模型，无需额外 API 费用
 - 🚀 **一键运行**：提供批处理脚本，自动配置环境和依赖
 
 ## 🎬 使用场景
 
-### 面试准备
+### 命令行版本 - 面试准备
 - 上传你的简历 PDF，让 AI 面试官根据你的项目经历提出技术问题
 - 练习回答诸如"你在简历中提到使用了 Redis，请具体说说你是如何处理缓存穿透的？"这类深度问题
+- 可配置不同的面试官风格，体验不同强度的面试
+
+### API 服务 - 前端集成
+- 提供 RESTful API 接口，支持 Web/移动端应用接入
+- 支持简历上传、面试会话管理、实时对话等功能
+- 配合 UniApp 前端项目，实现跨平台的面试体验
 
 ### 简历优化
 - 通过 AI 面试官的提问，发现简历中可能被质疑的技术点
@@ -36,6 +44,34 @@
 3. **向量化存储**：使用 Embedding 模型将文本转换为向量并存储
 4. **检索增强**：根据用户输入检索相关简历内容
 5. **生成回答**：结合检索到的内容和对话历史生成面试问题
+
+## 📁 项目结构
+
+```
+ResumeRoaster/
+├── AIReference/              # AI 参考文档目录
+│   ├── README.md            # 目录说明
+│   ├── INTERVIEW_STYLES*.md # 面试官风格文档
+│   ├── FIX_*.md             # 问题修复文档
+│   └── TEST_*.md            # 测试验证文档
+├── api_server.py            # Flask API 服务器（支持前端接入）
+├── main.py                  # 命令行版本主程序
+├── config.ini               # 配置文件
+├── config.ini.template      # 配置文件模板
+├── requirements.txt         # 依赖列表
+├── run.bat                  # 启动命令行版本
+├── start_api_server.bat     # 启动 API 服务器
+└── test_*.bat               # 测试脚本
+```
+
+### AIReference 目录说明
+
+`AIReference` 目录存放 AI 辅助开发过程中的参考文档，包括：
+- 问题修复记录
+- 测试验证指南
+- 开发实战文档
+
+这些文档不影响项目核心功能，主要用于问题追溯和 AI 记忆。
 
 ## 📦 安装与配置
 
@@ -64,6 +100,9 @@ cp config.ini.template config.ini
 # 选择 API 提供商: deepseek 或 google
 provider = deepseek
 
+# 面试官风格: critical (刁钻型) / partner (伙伴型) / guide (引导型)
+interview_style = critical
+
 [deepseek]
 # DeepSeek API 配置 (推荐，性价比高)
 api_key = your-deepseek-api-key
@@ -75,6 +114,13 @@ model = deepseek-chat
 api_key = your-google-api-key
 model = gemini-2.0-flash
 ```
+
+**🎭 面试官风格说明**：
+- `critical` - **刁钻型**（默认）：经验丰富且极其刁钻，深入追问技术细节，适合高强度面试准备
+- `partner` - **伙伴型**：充满激情和共情能力，营造轻松的交流氛围，适合练习讲故事和分享经历
+- `guide` - **引导型**：冷静理智，善于引导，帮助你系统性梳理思路，适合系统设计面试准备
+
+详见 [面试官风格配置说明](AIReference/INTERVIEW_STYLES.md)
 
 **API 申请地址：**
 - DeepSeek: https://platform.deepseek.com/api_keys
@@ -106,6 +152,8 @@ python main.py
 
 ## 🎮 使用方法
 
+### 方式一：命令行版本（单机使用）
+
 1. **启动程序**：运行 `run.bat` 或 `python main.py`
 
 2. **上传简历**：程序会提示你输入简历 PDF 文件路径
@@ -118,6 +166,38 @@ python main.py
    - 你可以正常回答，面试官会根据你的回答继续追问
 
 4. **结束面试**：输入 `quit`、`exit`、`退出` 或 `结束` 来结束面试
+
+### 方式二：API 服务器（支持前端接入）
+
+1. **启动 API 服务器**：
+   ```bash
+   python api_server.py
+   ```
+   或运行 `start_api_server.bat`
+
+2. **服务器信息**：
+   - 默认端口：5000
+   - 健康检查：http://localhost:5000/api/health
+   - API 文档：参见 [API 接口说明](#api-接口说明)
+
+3. **前端接入**：
+   - 配合 [ResumeRoaster-UniApp](../ResumeRoaster-UniApp) 项目使用
+   - 支持 H5、微信小程序、App 等多端
+
+### API 接口说明
+
+| 接口 | 方法 | 说明 | 参数 |
+|------|------|------|------|
+| `/api/health` | GET | 健康检查 | - |
+| `/api/upload-resume` | POST | 上传简历 | file: PDF文件 |
+| `/api/interview/start` | POST | 开始面试 | resume_id, interview_style (可选) |
+| `/api/interview/message` | POST | 发送消息 | session_id, message |
+| `/api/interview/end` | POST | 结束面试 | session_id |
+
+**注意**：
+- `interview_style` 参数可选值：`critical`（刁钻型）、`partner`（伙伴型）、`guide`（引导型）
+- 如果不指定，默认使用 `config.ini` 中配置的风格
+- UniApp 前端会在上传简历时随机选择一种风格
 
 ### 示例对话
 
@@ -197,25 +277,135 @@ ResumeRoaster/
 
 ### 常见问题
 
-1. **配置文件不存在**
+1. **protobuf 版本冲突错误** ⚠️ 常见问题
+   ```
+   cannot import name 'runtime_version' from 'google.protobuf'
+   ```
+   
+   **原因**：chromadb 0.4.24 需要 protobuf < 4.0.0，但其他依赖可能安装了 protobuf 4.x 或 5.x。
+   
+   **解决方案**：
+   
+   - **方法1（推荐）**：运行强制修复脚本 ⚡
+     ```bash
+     force_fix_protobuf.bat
+     ```
+     此脚本会：
+     - 完全卸载 protobuf（多次卸载确保干净）
+     - 清理 pip 缓存
+     - 强制安装 protobuf 3.20.3
+     - 重新安装 chromadb 0.4.24
+     - 验证所有依赖
+   
+   - **方法2**：运行简化修复脚本
+     ```bash
+     fix_simple.bat
+     ```
+   
+   - **方法3**：手动修复（如果脚本失败）
+     ```bash
+     # 1. 多次卸载 protobuf（确保完全移除）
+     pip uninstall -y protobuf
+     pip uninstall -y protobuf
+     pip uninstall -y protobuf
+     
+     # 2. 清理缓存
+     pip cache purge
+     
+     # 3. 强制安装正确版本（不使用缓存）
+     pip install --no-cache-dir protobuf==3.20.3
+     
+     # 4. 验证版本
+     python -c "import google.protobuf; print('Protobuf:', google.protobuf.__version__)"
+     python -c "from google.protobuf import runtime_version; print('✓ OK')"
+     
+     # 5. 重新安装其他依赖
+     pip install --no-cache-dir chromadb==0.4.24
+     pip install -r requirements.txt
+     ```
+   
+   - **方法4**：诊断当前状态
+     ```bash
+     check_protobuf.bat
+     ```
+     运行此脚本查看当前 protobuf 版本和问题详情
+   
+   - **方法5**：使用云端 Embedding（避免本地依赖）
+     在 `config.ini` 中设置：
+     ```ini
+     [embedding]
+     type = deepseek
+     ```
+     这样就不需要本地模型，完全避免 protobuf 冲突
+   
+   **详细说明**：参见 [PROTOBUF_FIX.md](PROTOBUF_FIX.md)
+
+2. **tensorflow 依赖冲突** 🔴 严重问题
+   ```
+   tensorflow 2.20.0 requires protobuf>=5.28.0, but you have protobuf 3.20.3
+   ```
+   
+   **原因**：环境中安装了 tensorflow，但**本项目不需要 tensorflow**。tensorflow 要求 protobuf >= 5.28.0，与 chromadb 0.4.24 的要求（protobuf < 4.0.0）冲突。
+   
+   **解决方案**：
+   
+   - **方法1（推荐）**：运行彻底清理脚本 🧹
+     ```bash
+     clean_and_fix.bat
+     ```
+     此脚本会：
+     - 卸载 tensorflow、tensorboard、grpcio 等不需要的包
+     - 清理 pip 缓存
+     - 只安装项目需要的依赖
+     - 验证所有依赖正确
+   
+   - **方法2**：手动卸载冲突包
+     ```bash
+     # 卸载不需要的包
+     pip uninstall -y tensorflow tensorflow-intel tensorboard grpcio grpcio-status
+     
+     # 清理缓存
+     pip cache purge
+     
+     # 重新安装项目依赖
+     pip install --no-cache-dir protobuf==3.20.3
+     pip install --no-cache-dir chromadb==0.4.24
+     pip install -r requirements.txt
+     ```
+
+3. **配置文件不存在**
    - 如果提示找不到 `config.ini`，请先复制模板文件：`cp config.ini.template config.ini`
    - 然后编辑 `config.ini` 填入你的 API Key
 
-2. **API Key 错误**
+3. **API Key 错误**
    - 检查 `config.ini` 中的 API Key 是否正确
    - 确认 API Key 有足够的余额
 
-3. **PDF 读取失败**
+4. **PDF 读取失败**
    - 确保 PDF 文件没有密码保护
    - 尝试重新保存 PDF 文件
 
-4. **依赖安装失败**
+5. **依赖安装失败**
    - 使用国内镜像源：`pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple`
    - 检查 Python 版本是否为 3.8+
 
-5. **模型下载慢**
+6. **模型下载慢**
    - 首次使用本地 Embedding 需要下载模型，请耐心等待
    - 可以配置 HuggingFace 镜像源加速下载
+
+7. **H5 前端第一个问题不显示** 🌐 已修复
+   ```
+   页面显示"面试已开始，请准备好回答问题"，但没有面试官的第一个问题
+   ```
+   
+   **原因**：后端只创建了会话，但没有调用 LLM 生成第一个问题。
+   
+   **解决方案**：
+   - ✅ 已在 v1.1.0 版本修复
+   - 后端会在创建会话后立即生成第一个问题
+   - 如果你使用的是旧版本，请更新代码或重启后端服务器
+   
+   **详细说明**：参见 [FIX_H5_FIRST_QUESTION.md](FIX_H5_FIRST_QUESTION.md)
 
 ### 测试 API 连接
 
@@ -225,14 +415,27 @@ ResumeRoaster/
 python test_api.py
 ```
 
-## 🚀 扩展功能
+## 🚀 功能特性
 
-### 未来计划
+### 已完成功能 ✅
+- ✅ 命令行版本面试系统
+- ✅ RESTful API 服务器
+- ✅ 三种面试官风格（刁钻型、伙伴型、引导型）
+- ✅ 支持 DeepSeek 和 Google Gemini API
+- ✅ 本地 Embedding 模型支持
+- ✅ 简历 PDF 解析和向量化
+- ✅ RAG 检索增强生成
+- ✅ 多轮对话和上下文记忆
+- ✅ 会话管理和状态持久化
+- ✅ UniApp 前端集成（H5/小程序/App）
+
+### 未来计划 🔮
 - [ ] 支持 Word 格式简历
 - [ ] 添加面试评分功能
-- [ ] 支持多轮面试记录
-- [ ] Web 界面版本
-- [ ] 支持更多大模型 API
+- [ ] 支持多轮面试记录和历史回顾
+- [ ] 面试报告生成和导出
+- [ ] 支持更多大模型 API（如 OpenAI、Claude）
+- [ ] 语音面试功能
 
 ### 自定义面试官风格
 
