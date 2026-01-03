@@ -2,11 +2,20 @@
 # API 提供商选择: deepseek 或 google
 provider = deepseek
 
+# 面试官风格: critical (刁钻型) / partner (伙伴型) / guide (引导型)
+interview_style = critical
+
 [embedding]
 # Embedding 类型: local (本地免费) 或 deepseek (需API，DeepSeek暂不支持，会报错)
 # 推荐使用 local，首次运行会下载约400MB模型
 type = local
 model = sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+
+[api]
+# API 服务器配置
+port = 5000
+cors_enabled = true
+cors_origins = *
 
 [deepseek]
 # DeepSeek API 配置

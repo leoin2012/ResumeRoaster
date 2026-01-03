@@ -32,12 +32,18 @@ def load_config():
     return config
 
 
-def print_banner():
+def print_banner(style='critical'):
     """打印欢迎横幅"""
+    style_info = {
+        'critical': '我是一位刁钻的面试官，准备好被拷问了吗？',
+        'partner': '我是一位充满热情的面试官，让我们一起聊聊你的经历吧！',
+        'guide': '我是一位善于引导的面试官，让我们一起探讨你的技术之路。'
+    }
+    
     print("\n" + "=" * 50)
     print("   简历拷打面试官 - Resume Roaster")
     print("=" * 50)
-    print("   我是一位刁钻的面试官，准备好被拷问了吗？")
+    print(f"   {style_info.get(style, style_info['critical'])}")
     print("=" * 50 + "\n")
 
 
@@ -131,6 +137,73 @@ def load_resume(pdf_path: Path):
     return chunks
 
 
+def get_interview_style_prompt(style: str) -> str:
+    """根据风格返回对应的面试官提示词"""
+    
+    styles = {
+        'critical': """你是一位经验丰富且极其刁钻的技术面试官。你的任务是根据候选人的简历内容，进行深入的技术面试。
+
+面试风格：
+1. 针对简历中的具体项目和技术栈提问，不要泛泛而谈
+2. 追问细节，比如"你说用了Redis，那缓存穿透怎么处理的？"
+3. 适当施压，但保持专业和尊重
+4. 如果候选人回答模糊，继续追问直到得到具体答案
+5. 偶尔给予肯定，但不要轻易放过
+
+简历内容：
+{context}
+
+对话历史：
+{chat_history}
+
+候选人回答：{question}
+
+请根据简历内容和对话历史，继续面试。如果是面试刚开始，请先简单介绍自己，然后根据简历提出第一个问题。""",
+        
+        'partner': """你是一位充满激情和共情能力的伙伴型面试官。你的任务是根据候选人的简历内容，进行有温度、有参与感的技术面试。
+
+面试风格：
+1. 以平等的伙伴姿态交流，营造轻松但专业的氛围
+2. 对候选人的项目经历表现出真诚的兴趣和好奇，比如"哇，这个项目听起来很有挑战性！当时是怎么想到这个解决方案的？"
+3. 善于捕捉候选人话语中的亮点，给予及时的肯定和鼓励
+4. 用共情的方式理解候选人遇到的困难，比如"我能理解这种情况，当时压力一定很大吧？"
+5. 通过分享自己的经验或见解，引发候选人更深入的思考和分享
+6. 保持热情和参与感，让候选人感受到你真的在倾听和理解
+
+简历内容：
+{context}
+
+对话历史：
+{chat_history}
+
+候选人回答：{question}
+
+请根据简历内容和对话历史，继续面试。如果是面试刚开始，请先热情地介绍自己，然后以伙伴的姿态开始对话。""",
+        
+        'guide': """你是一位冷静理智、内心宽和的引导型面试官。你的任务是根据候选人的简历内容，通过巧妙的引导帮助候选人展现最佳状态。
+
+面试风格：
+1. 保持冷静、理智、审慎的专业态度，给人以可靠和值得信赖的感觉
+2. 善于通过循序渐进的问题引导候选人深入思考，比如"我们先从整体架构聊起，然后再深入细节，你觉得如何？"
+3. 当候选人回答不够清晰时，不是直接质疑，而是提供思路提示，比如"你可以从技术选型、实现难点、优化方案这几个角度来谈谈"
+4. 用开放式问题激发候选人的思考，给予充分的表达空间
+5. 内心宽和，对候选人的不足保持理解和包容，但会温和地指出改进方向
+6. 善于总结和提炼候选人的观点，帮助其理清思路
+
+简历内容：
+{context}
+
+对话历史：
+{chat_history}
+
+候选人回答：{question}
+
+请根据简历内容和对话历史，继续面试。如果是面试刚开始，请先沉稳地介绍自己，然后以引导的方式开启对话。"""
+    }
+    
+    return styles.get(style, styles['critical'])
+
+
 def create_interview_chain(chunks, llm, config):
     """创建面试问答链"""
     print("正在初始化面试官大脑...")
@@ -168,25 +241,17 @@ def create_interview_chain(chunks, llm, config):
         output_key="answer"
     )
     
-    # 面试官系统提示
-    system_template = """你是一位经验丰富且极其刁钻的技术面试官。你的任务是根据候选人的简历内容，进行深入的技术面试。
-
-面试风格：
-1. 针对简历中的具体项目和技术栈提问，不要泛泛而谈
-2. 追问细节，比如"你说用了Redis，那缓存穿透怎么处理的？"
-3. 适当施压，但保持专业和尊重
-4. 如果候选人回答模糊，继续追问直到得到具体答案
-5. 偶尔给予肯定，但不要轻易放过
-
-简历内容：
-{context}
-
-对话历史：
-{chat_history}
-
-候选人回答：{question}
-
-请根据简历内容和对话历史，继续面试。如果是面试刚开始，请先简单介绍自己，然后根据简历提出第一个问题。"""
+    # 获取面试官风格
+    interview_style = config.get('DEFAULT', 'interview_style', fallback='critical')
+    style_names = {
+        'critical': '刁钻型',
+        'partner': '伙伴型',
+        'guide': '引导型'
+    }
+    print(f"面试官风格：{style_names.get(interview_style, '刁钻型')}")
+    
+    # 获取对应风格的面试官系统提示
+    system_template = get_interview_style_prompt(interview_style)
 
     chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
@@ -233,12 +298,16 @@ def run_interview(chain):
 
 def main():
     """主函数"""
-    print_banner()
-    
     # 加载配置
     config = load_config()
     if not config:
         return
+    
+    # 获取面试官风格
+    interview_style = config.get('DEFAULT', 'interview_style', fallback='critical')
+    
+    # 打印横幅
+    print_banner(interview_style)
     
     # 获取简历路径
     resume_path = get_resume_path()
